@@ -134,7 +134,12 @@ module.exports = class UserController {
         const user = await getUserByToken(token)
 
         const { name, email, phone, password, confirmpassword } = req.body
+
         let image = ''
+
+        if (req.file) {
+            image = req.file.filename
+        }
 
         if (!name) {
             res.status(422).json({ message: 'Nome é obrigatório' })
@@ -152,8 +157,6 @@ module.exports = class UserController {
             return
         }
 
-        user.phone = phone
-
         const userExists = await User.findOne({ email: email })
 
         if (user.email !== email && userExists) {
@@ -167,29 +170,6 @@ module.exports = class UserController {
 
         if (password !== confirmpassword) {
             res.status(422).json({ message: 'As senhas não coincidem' })
-            return
-        } else if (password === confirmpassword && password != null) {
-            const salt = await bcrypt.genSalt(12)
-            user.passwordHash = await bcrypt.hash(password, salt)
-
-            user.password = passwordHash
-        }
-
-        try {
-
-            const updatedUser = await User.findOneAndUpdate(
-                { _id: user._id },
-                { $set: user },
-                { new: true }
-            )
-
-            res.status(202).json({
-                message: 'Dados aceitos e processados',
-                user: updatedUser
-            })
-
-        } catch (err) {
-            res.status(500).json({ message: err })
             return
         }
     }
